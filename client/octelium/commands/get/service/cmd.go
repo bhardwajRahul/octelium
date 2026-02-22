@@ -112,12 +112,12 @@ func PrintServiceList(svcList []*userv1.Service) {
 		return
 	}
 
-	p := printer.NewPrinter("Name", "Namespace", "Port", "Type", "Addresses", "Description", "TLS", "Public")
+	p := printer.NewPrinter("Name", "Namespace", "Port", "Type", "Addresses", "TLS", "Public")
 	for _, svc := range svcList {
 		p.AppendRow(getName(svc), getNamespace(svc),
 			fmt.Sprintf("%d", svc.Spec.Port),
 			svc.Spec.Type.String(), strings.Join(svc.Status.Addresses, ", "),
-			svc.Metadata.Description, cliutils.PrintBoolean(svc.Spec.IsTLS), cliutils.PrintBoolean(svc.Spec.IsPublic))
+			cliutils.PrintBoolean(svc.Spec.IsTLS), cliutils.PrintBoolean(svc.Spec.IsPublic))
 	}
 
 	p.Render()
