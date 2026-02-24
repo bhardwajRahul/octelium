@@ -1,15 +1,24 @@
-bin/
-vendor/
-tmp/
+/*
 
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.code-workspace
+!/.gitignore
 
-# Local History for Visual Studio Code
-.history/
+!/apis/
+!/client/
+!/cluster/
+!/unsorted/
+!/pkg/
+!/octelium-go/
+!/.github/
 
-*.test
+!/go.work
+!/go.work.sum
+!/LICENSE-AGPL-3.0
+!/LICENSE-APACHE
+!/Makefile
+!/README.md
+!/SECURITY.md
+
+!/.vscode/
+/.vscode/*
+!/.vscode/extensions.json
+!/.vscode/settings.json
