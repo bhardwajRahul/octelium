@@ -81,7 +81,8 @@ func (s *Server) GetStatus(ctx context.Context, req *userv1.GetStatusRequest) (*
 		},
 		Spec: &userv1.GetStatusResponse_Session_Spec{},
 		Status: &userv1.GetStatusResponse_Session_Status{
-			Type: userv1.GetStatusResponse_Session_Status_Type(sess.Status.Type),
+			Type:        userv1.GetStatusResponse_Session_Status_Type(sess.Status.Type),
+			IsConnected: sess.Status.IsConnected,
 		},
 	}
 
