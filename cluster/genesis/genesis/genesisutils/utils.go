@@ -113,6 +113,39 @@ func CreateOrUpdateNamespace(ctx context.Context, octeliumC octeliumc.ClientInte
 	return nil
 }
 
+func CreateOrUpdatePolicy(ctx context.Context, octeliumC octeliumc.ClientInterface, pol *corev1.Policy) error {
+
+	if pol.Status == nil {
+		pol.Status = &corev1.Policy_Status{}
+	}
+	if pol.Spec == nil {
+		pol.Spec = &corev1.Policy_Spec{}
+	}
+
+	if itm, err := octeliumC.CoreC().GetPolicy(ctx, &rmetav1.GetOptions{
+		Name: pol.Metadata.Name,
+	}); err == nil {
+		itm.Spec = pol.Spec
+		setMetadata(itm.Metadata, pol.Metadata)
+
+		_, err = octeliumC.CoreC().UpdatePolicy(ctx, itm)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	} else if !grpcerr.IsNotFound(err) {
+		return err
+	}
+
+	_, err := octeliumC.CoreC().CreatePolicy(ctx, pol)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func setMetadata(to, from *metav1.Metadata) {
 	to.Labels = from.Labels
 	to.SystemLabels = from.SystemLabels

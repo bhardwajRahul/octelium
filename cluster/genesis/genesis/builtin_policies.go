@@ -21,9 +21,7 @@ import (
 
 	"github.com/octelium/octelium/apis/main/corev1"
 	"github.com/octelium/octelium/apis/main/metav1"
-	"github.com/octelium/octelium/apis/rsc/rmetav1"
-	"github.com/octelium/octelium/pkg/common/pbutils"
-	"github.com/octelium/octelium/pkg/grpcerr"
+	"github.com/octelium/octelium/cluster/genesis/genesis/genesisutils"
 	"go.uber.org/zap"
 )
 
@@ -119,6 +117,14 @@ func (g *Genesis) getBuiltinPolicies(ctx context.Context) (*corev1.PolicyList, e
 					},
 					Effect: corev1.Policy_Spec_EnforcementRule_ENFORCE,
 				},
+				{
+					Condition: &corev1.Condition{
+						Type: &corev1.Condition_MatchAny{
+							MatchAny: true,
+						},
+					},
+					Effect: corev1.Policy_Spec_EnforcementRule_IGNORE,
+				},
 			},
 			Rules: []*corev1.Policy_Spec_Rule{
 				{
@@ -153,15 +159,16 @@ func (g *Genesis) getBuiltinPolicies(ctx context.Context) (*corev1.PolicyList, e
 			EnforcementRules: []*corev1.Policy_Spec_EnforcementRule{
 				{
 					Condition: &corev1.Condition{
-						Type: &corev1.Condition_Match{
-							Match: `ctx.service.spec.mode in ["HTTP", "WEB"]`,
+						Type: &corev1.Condition_Not{
+							Not: `ctx.service.spec.mode in ["HTTP", "WEB"]`,
 						},
 					},
+					Effect: corev1.Policy_Spec_EnforcementRule_IGNORE,
 				},
 			},
 			Rules: []*corev1.Policy_Spec_Rule{
 				{
-					Name:     "allowed-methodss",
+					Name:     "allowed-methods",
 					Effect:   corev1.Policy_Spec_Rule_ALLOW,
 					Priority: -1,
 					Condition: &corev1.Condition{
@@ -195,29 +202,9 @@ func (g *Genesis) installBuiltinPolicies(ctx context.Context) error {
 		return err
 	}
 
-	for _, itm := range polList.Items {
-		pol, err := g.octeliumC.CoreC().GetPolicy(ctx, &rmetav1.GetOptions{
-			Name: itm.Metadata.Name,
-		})
-		if err != nil {
-			if !grpcerr.IsNotFound(err) {
-				return err
-			}
-
-			_, err := g.octeliumC.CoreC().CreatePolicy(ctx, itm)
-			if err != nil {
-				return err
-			}
-		} else {
-
-			if !pbutils.IsEqual(pol.Spec, itm.Spec) {
-				pol.Spec = itm.Spec
-				_, err := g.octeliumC.CoreC().UpdatePolicy(ctx, pol)
-				if err != nil {
-					return err
-				}
-			}
-
+	for _, pol := range polList.Items {
+		if err := genesisutils.CreateOrUpdatePolicy(ctx, g.octeliumC, pol); err != nil {
+			zap.L().Warn("Could not create builtin Policy", zap.Any("policy", pol), zap.Error(err))
 		}
 	}
 
